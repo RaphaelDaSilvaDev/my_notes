@@ -1,0 +1,10 @@
+<resources>
+    <string name="app_name">My Notes</string>
+    <string name="create_note">Criar Nota</string>
+    <string name="title">Título</string>
+    <string name="desc">Descrição</string>
+    <string name="add_image">Adicionar Imagem</string>
+    <string name="change_color">Alterar Cor</string>
+    <string name="image_url">URL da Imagem</string>
+    <string name="select_a_color">Selecione uma cor:</string>
+</resources>
