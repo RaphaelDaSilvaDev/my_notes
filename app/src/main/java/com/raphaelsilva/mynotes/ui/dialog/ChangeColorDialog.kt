@@ -1,11 +1,8 @@
-package com.raphaelsilva.mynotes.dialog
+package com.raphaelsilva.mynotes.ui.dialog
 
 import android.app.AlertDialog
 import android.content.Context
 import android.view.LayoutInflater
-import android.view.View
-import android.widget.RadioButton
-import com.raphaelsilva.mynotes.R
 import com.raphaelsilva.mynotes.databinding.DialogChangeColorBinding
 
 class ChangeColorDialog(private val context: Context) {

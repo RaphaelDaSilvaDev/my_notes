@@ -1,4 +1,4 @@
-package com.raphaelsilva.mynotes.dialog
+package com.raphaelsilva.mynotes.ui.dialog
 
 import android.app.AlertDialog
 import android.content.Context

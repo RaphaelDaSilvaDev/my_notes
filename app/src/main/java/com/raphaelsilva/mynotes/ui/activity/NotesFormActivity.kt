@@ -10,8 +10,8 @@ import androidx.lifecycle.lifecycleScope
 import com.raphaelsilva.mynotes.R
 import com.raphaelsilva.mynotes.database.AppDatabase
 import com.raphaelsilva.mynotes.databinding.ActivityNotesFormBinding
-import com.raphaelsilva.mynotes.dialog.AddImageDialog
-import com.raphaelsilva.mynotes.dialog.ChangeColorDialog
+import com.raphaelsilva.mynotes.ui.dialog.AddImageDialog
+import com.raphaelsilva.mynotes.ui.dialog.ChangeColorDialog
 import com.raphaelsilva.mynotes.exceptions.CoroutineException
 import com.raphaelsilva.mynotes.extensions.loadImage
 import com.raphaelsilva.mynotes.model.Note
@@ -63,9 +63,11 @@ class NotesFormActivity : AppCompatActivity(R.layout.activity_notes_form) {
         binding.notesFormDesc.setText(note.description)
 
         note?.image.let { image ->
-            binding.notesFormImage.loadImage(image)
-            imageUrl = image
-            binding.notesFormImage.visibility = View.VISIBLE
+            if (!image.isNullOrEmpty()) {
+                binding.notesFormImage.loadImage(image)
+                imageUrl = image
+                binding.notesFormImage.visibility = View.VISIBLE
+            }
         }
 
         selectedColor = note.color
