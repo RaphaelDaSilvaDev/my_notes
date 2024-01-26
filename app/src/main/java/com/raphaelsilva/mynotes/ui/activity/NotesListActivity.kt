@@ -2,7 +2,6 @@ package com.raphaelsilva.mynotes.ui.activity
 
 import android.content.Intent
 import android.os.Bundle
-import android.util.Log
 import android.view.View
 import androidx.appcompat.app.AppCompatActivity
 import androidx.lifecycle.Lifecycle
@@ -11,13 +10,11 @@ import androidx.lifecycle.repeatOnLifecycle
 import com.raphaelsilva.mynotes.R
 import com.raphaelsilva.mynotes.database.AppDatabase
 import com.raphaelsilva.mynotes.databinding.ActivityNotesListBinding
-import com.raphaelsilva.mynotes.model.Note
+import com.raphaelsilva.mynotes.repository.NotesRepository
 import com.raphaelsilva.mynotes.ui.recyclerview.adapter.NotesListAdapter
-import com.raphaelsilva.mynotes.webClient.RetrofitInit
-import com.raphaelsilva.mynotes.webClient.model.NoteRequest
+import com.raphaelsilva.mynotes.webClient.NotesWebClient
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
-import retrofit2.Call
 
 class NotesListActivity : AppCompatActivity(R.layout.activity_notes_list) {
     private val binding by lazy {
@@ -28,50 +25,54 @@ class NotesListActivity : AppCompatActivity(R.layout.activity_notes_list) {
         NotesListAdapter(this)
     }
 
-    private val noteDao by lazy {
-        AppDatabase.instance(this).noteDao()
+    private val notesRepository by lazy {
+        NotesRepository(
+            AppDatabase.instance(this).noteDao(), NotesWebClient()
+        )
     }
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContentView(binding.root)
 
+        settingRefresh()
         settingRecyclerView()
         lifecycleScope.launch {
+            launch(Dispatchers.IO) {
+                notesRepository.synchronize()
+            }
+
             repeatOnLifecycle(Lifecycle.State.STARTED) {
                 updateAdapter()
             }
+
         }
 
         binding.notesListCreateNewNote.setOnClickListener {
             val intent = Intent(this, NotesFormActivity::class.java)
             startActivity(intent)
         }
+    }
 
-        lifecycleScope.launch(Dispatchers.IO) {
-            val call: Call<List<NoteRequest>> = RetrofitInit().noteService.getAll()
-            val response = call.execute()
-            response.body()?.let { notesRequest ->
-                val notes = notesRequest.map {
-                    it.note
-                }
-                Log.i("RetrofitNotes", "onCreate: $notes")
+    private fun settingRefresh() {
+        binding.noteListRefresh.setOnRefreshListener {
+            lifecycleScope.launch(Dispatchers.IO) {
+                notesRepository.synchronize()
+                binding.noteListRefresh.isRefreshing = false
             }
-
         }
     }
 
     private suspend fun updateAdapter() {
-        noteDao.getAll().collect { notes ->
-            binding.notesListEmptyText.visibility =
-                if (notes.isEmpty()) {
-                    binding.notesListRecycler.visibility = View.GONE
-                    View.VISIBLE
-                } else {
-                    binding.notesListRecycler.visibility = View.VISIBLE
-                    adapter.update(notes)
-                    View.GONE
-                }
+        notesRepository.getAllEnabled().collect { notes ->
+            binding.notesListEmptyText.visibility = if (notes.isEmpty()) {
+                binding.notesListRecycler.visibility = View.GONE
+                View.VISIBLE
+            } else {
+                binding.notesListRecycler.visibility = View.VISIBLE
+                adapter.update(notes)
+                View.GONE
+            }
         }
     }
 

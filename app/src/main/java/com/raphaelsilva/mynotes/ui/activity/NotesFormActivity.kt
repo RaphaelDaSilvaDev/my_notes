@@ -1,6 +1,7 @@
 package com.raphaelsilva.mynotes.ui.activity
 
 import android.os.Bundle
+import android.util.Log
 import android.view.View
 import android.widget.PopupMenu
 import android.widget.RadioButton
@@ -10,11 +11,13 @@ import androidx.lifecycle.lifecycleScope
 import com.raphaelsilva.mynotes.R
 import com.raphaelsilva.mynotes.database.AppDatabase
 import com.raphaelsilva.mynotes.databinding.ActivityNotesFormBinding
-import com.raphaelsilva.mynotes.ui.dialog.AddImageDialog
-import com.raphaelsilva.mynotes.ui.dialog.ChangeColorDialog
 import com.raphaelsilva.mynotes.exceptions.CoroutineException
 import com.raphaelsilva.mynotes.extensions.loadImage
 import com.raphaelsilva.mynotes.model.Note
+import com.raphaelsilva.mynotes.repository.NotesRepository
+import com.raphaelsilva.mynotes.ui.dialog.AddImageDialog
+import com.raphaelsilva.mynotes.ui.dialog.ChangeColorDialog
+import com.raphaelsilva.mynotes.webClient.NotesWebClient
 import kotlinx.coroutines.launch
 
 class NotesFormActivity : AppCompatActivity(R.layout.activity_notes_form) {
@@ -22,11 +25,14 @@ class NotesFormActivity : AppCompatActivity(R.layout.activity_notes_form) {
         ActivityNotesFormBinding.inflate(layoutInflater)
     }
 
-    private val noteDao by lazy {
-        AppDatabase.instance(this).noteDao()
+    private val noteRepository by lazy{
+        NotesRepository(
+            AppDatabase.instance(this).noteDao(),
+            NotesWebClient()
+        )
     }
 
-    private var noteId: Long = 0L
+    private var noteId: String? = null
     private var imageUrl: String? = null
     private var selectedColor: Int? = null
 
@@ -48,10 +54,11 @@ class NotesFormActivity : AppCompatActivity(R.layout.activity_notes_form) {
     }
 
     private fun loadNote() {
-        noteId = intent.getLongExtra(NOTE_ID, 0)
-        lifecycleScope.launch(CoroutineException.handler(this)) {
-            noteDao.getById(noteId).collect { note ->
-                if (note != null) {
+        noteId = intent.getStringExtra(NOTE_ID)
+        Log.i("NOTEID", "loadNote: $noteId")
+        noteId?.let{id ->
+            lifecycleScope.launch(CoroutineException.handler(this)) {
+                noteRepository.getById(id).collect { note ->
                     bindingNote(note)
                 }
             }
@@ -62,7 +69,7 @@ class NotesFormActivity : AppCompatActivity(R.layout.activity_notes_form) {
         binding.notesFormTitle.setText(note.title)
         binding.notesFormDesc.setText(note.description)
 
-        note?.image.let { image ->
+        note.image.let { image ->
             if (!image.isNullOrEmpty()) {
                 binding.notesFormImage.loadImage(image)
                 imageUrl = image
@@ -71,10 +78,10 @@ class NotesFormActivity : AppCompatActivity(R.layout.activity_notes_form) {
         }
 
         selectedColor = note.color
-        if (selectedColor != null) {
+        selectedColor?.let{ color ->
             val background = binding.notesFormBody
-            binding.notesFormBarColor.setBackgroundColor(resources.getColor(selectedColor!!))
-            background.setBackgroundColor(resources.getColor(selectedColor!!))
+            binding.notesFormBarColor.setBackgroundColor(resources.getColor(color))
+            background.setBackgroundColor(resources.getColor(color))
             background.background.alpha = 50
         }
     }
@@ -97,11 +104,11 @@ class NotesFormActivity : AppCompatActivity(R.layout.activity_notes_form) {
     private fun bindingColor() {
         ChangeColorDialog(this).show {
             val background = binding.notesFormBody
-            if (it.isNullOrBlank()) {
+            if (it.isBlank()) {
                 binding.notesFormBarColor.setBackgroundColor(resources.getColor(android.R.color.transparent))
                 background.setBackgroundColor(resources.getColor(android.R.color.transparent))
                 selectedColor = null
-            } else if (it === "apply" && !selectedColor.toString().isNullOrBlank()) {
+            } else if (it === "apply" && selectedColor.toString().isNotBlank()) {
                 binding.notesFormBarColor.setBackgroundColor(resources.getColor(selectedColor!!))
                 background.setBackgroundColor(resources.getColor(selectedColor!!))
                 background.background.alpha = 50
@@ -140,7 +147,7 @@ class NotesFormActivity : AppCompatActivity(R.layout.activity_notes_form) {
         formSaveButton.setOnClickListener {
             lifecycleScope.launch(CoroutineException.handler(this)) {
                 val newNote = note()
-                noteDao.save(newNote)
+                noteRepository.save(newNote)
                 finish()
             }
         }
@@ -149,15 +156,24 @@ class NotesFormActivity : AppCompatActivity(R.layout.activity_notes_form) {
     private fun onDeleteButton() {
         binding.notesFormDelete.setOnClickListener {
             lifecycleScope.launch(CoroutineException.handler(this)) {
-                noteDao.delete(noteId)
+                noteId?.let{id ->
+                    noteRepository.delete(id)
+                }
                 finish()
             }
         }
     }
 
     private fun note(): Note {
-        return Note(
-            id = noteId,
+        return noteId?.let {id ->
+            Note(
+                id = id,
+                title = binding.notesFormTitle.text.toString(),
+                description = binding.notesFormDesc.text.toString(),
+                image = imageUrl,
+                color = selectedColor
+            )
+        } ?: Note(
             title = binding.notesFormTitle.text.toString(),
             description = binding.notesFormDesc.text.toString(),
             image = imageUrl,

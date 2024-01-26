@@ -12,13 +12,12 @@
         android:layout_height="wrap_content"
         android:layout_margin="16dp"
         android:text="@string/app_name"
-        android:textSize="24dp"
-        app:layout_constraintBottom_toTopOf="@id/notes_list_recycler"
+        android:textSize="24sp"
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintHorizontal_bias="0"
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintTop_toTopOf="parent"
-        app:layout_constraintVertical_bias="0" />
+        app:layout_constraintVertical_bias="1.0" />
 
     <TextView
         android:id="@+id/notes_list_empty_text"
@@ -33,19 +32,34 @@
         app:layout_constraintBottom_toBottomOf="parent"
         />
 
-    <androidx.recyclerview.widget.RecyclerView
-        android:id="@+id/notes_list_recycler"
+    <androidx.swiperefreshlayout.widget.SwipeRefreshLayout
+        android:id="@+id/note_list_refresh"
         android:layout_width="0dp"
-        android:layout_height="0dp"
-        android:layout_marginHorizontal="4dp"
-        app:layoutManager="androidx.recyclerview.widget.StaggeredGridLayoutManager"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="72dp"
+        app:layout_constraintBaseline_toBottomOf="parent"
         app:layout_constraintBottom_toBottomOf="parent"
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintTop_toBottomOf="@id/notes_list_title"
-        app:spanCount="2"
-        tools:itemCount="10"
-        tools:listitem="@layout/note_item" />
+        app:layout_constraintTop_toBottomOf="@id/notes_list_title">
+
+        <androidx.recyclerview.widget.RecyclerView
+            android:id="@+id/notes_list_recycler"
+            android:layout_width="0dp"
+            android:layout_height="0dp"
+            android:layout_marginHorizontal="4dp"
+            app:layoutManager="androidx.recyclerview.widget.StaggeredGridLayoutManager"
+            app:layout_constraintBottom_toBottomOf="parent"
+            app:layout_constraintEnd_toEndOf="parent"
+            app:layout_constraintStart_toStartOf="parent"
+            app:layout_constraintTop_toTopOf="parent"
+            app:spanCount="2"
+            tools:itemCount="10"
+            tools:listitem="@layout/note_item" />
+
+    </androidx.swiperefreshlayout.widget.SwipeRefreshLayout>
+
+
 
     <com.google.android.material.floatingactionbutton.ExtendedFloatingActionButton
        android:id="@+id/notes_list_create_new_note"

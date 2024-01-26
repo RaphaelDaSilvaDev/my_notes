@@ -14,8 +14,8 @@ class RetrofitInit {
         OkHttpClient.Builder().addInterceptor(logg).build()
     }
 
-    private val retrofit = Retrofit.Builder().baseUrl("http://172.31.128.1:8080/").client(client)
+    private val retrofit = Retrofit.Builder().baseUrl("http://10.0.0.163:8080/").client(client)
         .addConverterFactory(GsonConverterFactory.create()).build()
 
-    val noteService = retrofit.create(NoteService::class.java)
+    val noteService: NoteService = retrofit.create(NoteService::class.java)
 }
